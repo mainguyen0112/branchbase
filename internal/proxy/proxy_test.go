@@ -990,7 +990,7 @@ func TestProxyHandleConnection_GSSENCRequest(t *testing.T) {
 			if err := srv.Start(ctx); err != nil {
 				t.Fatalf("failed to start proxy: %v", err)
 			}
-			defer srv.Stop()
+			defer func() { _ = srv.Stop() }()
 
 			// 3. Connect a PostgreSQL client to the proxy
 			clientConn, err := net.DialTimeout(
