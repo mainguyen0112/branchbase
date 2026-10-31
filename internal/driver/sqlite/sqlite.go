@@ -93,6 +93,8 @@ func (d *SqliteDriver) Ping(ctx context.Context) error {
 			return fmt.Errorf("sqlite database file %q unreadable: %w", basePath, err)
 		}
 		if err := f.Close(); err != nil { fmt.Fprintf(os.Stderr, "failed to close f: %v\n", err) }
+	} else if !os.IsNotExist(err) {
+		return fmt.Errorf("sqlite database file %q inaccessible: %w", basePath, err)
 	}
 
 	return nil
@@ -308,6 +310,12 @@ func (d *SqliteDriver) ListBranches(ctx context.Context) ([]driver.BranchInfo, e
 		}
 
 		name := entry.Name()
+		if strings.HasSuffix(name, ".branchbase-copying") {
+			reservedDB := strings.TrimSuffix(name, ".branchbase-copying")
+			if reservedDB == baseFile || (strings.HasPrefix(reservedDB, basePrefix+"_") && strings.HasSuffix(reservedDB, ext)) {
+				continue
+			}
+		}
 		if _, err := os.Stat(filepath.Join(dir, name+".branchbase-copying")); err == nil {
 			continue
 		}
